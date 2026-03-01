@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Edit</title>
+  <link rel="stylesheet" href="/public/styles.css" />
+</head>
+<body>
+  <h1>Edit</h1>
+
+  <form method="POST" action="/edit/{{employee.employeeId}}">
+    <div>
+      <label>Name:</label>
+      <input type="text" name="name" value="{{employee.name}}" />
+    </div>
+
+    <div>
+      <label>Phone:</label>
+      <input type="text" name="phone" value="{{employee.phone}}" />
+    </div>
+
+    <button type="submit">Save</button>
+  </form>
+
+  <p><a href="/employee/{{employee.employeeId}}">Cancel</a></p>
+</body>
+</html>
