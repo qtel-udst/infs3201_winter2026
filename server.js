@@ -9,7 +9,9 @@ const persistence = require("./persistence");
 const business = require("./business");
 
 const PORT = 8000;
-const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017";
+const MONGO_URL =
+process.env.MONGO_URL ||
+"mongodb://127.0.0.1:27017";
 
 async function main() {
   const db = await getDb(MONGO_URL);
