@@ -1,0 +1,127 @@
+Assignment 4 Refactor Plan
+
+1. Collections That Will Change
+- employees collection:
+  - The employeeId field will be removed.
+  - MongoDB _id will be used as the primary identifier.
+  - Employee documents will continue to store name and phone.
+  - A photo-related field may be added for Assignment 4.
+
+- shifts collection:
+  - The shiftId field will be removed.
+  - MongoDB _id will be used as the primary identifier.
+  - A new employees array will be added to each shift document.
+  - This employees array will store employee ObjectId values directly.
+
+- assignments collection:
+  - This collection will be removed completely.
+  - Assignment relationships will no longer be stored in a separate collection.
+  - Employee-to-shift relationships will be embedded inside each shift document.
+
+- new collections:
+  - users collection will be added for login authentication.
+  - sessions collection will be added for custom session management.
+  - security_log collection will be added for access logging.
+
+2. Persistence Functions That Must Be Modified or Removed
+- Functions that must be removed or no longer used:
+  - getAssignmentsForEmployee(employeeId)
+  - getShiftById(shiftId) using old shiftId values
+  - getEmployeeById(employeeId) using old employeeId values
+  - updateEmployee(employeeId, ...) using old employeeId values
+
+- Functions that must be modified:
+  - getAllEmployees()
+    - no longer depends on employeeId for sorting or display logic
+  - getEmployeeById(...)
+    - must use MongoDB ObjectId and search using _id
+  - updateEmployee(...)
+    - must update using _id instead of employeeId
+  - any shift lookup function
+    - must use _id instead of shiftId
+
+- New persistence functions likely required:
+  - getShiftsForEmployee(employeeObjectId)
+  - getUserByUsername(username)
+  - createSession(token, username, expiresAt)
+  - getSessionByToken(token)
+  - updateSessionExpiry(token, expiresAt)
+  - deleteSession(token)
+  - insertSecurityLog(logEntry)
+
+3. Business Logic Changes Required
+- Existing business logic currently uses employeeId and shiftId.
+- Employee detail logic currently depends on the assignments collection.
+- This must be changed so that:
+  - employee details are loaded using employee _id
+  - shifts are found by searching for the employee ObjectId inside the shift employees array
+- Shift sorting must no longer depend on shiftId.
+- Employee sorting must no longer depend on employeeId.
+- Validation logic for employee editing can remain, but update logic must use _id.
+
+4. Effect of Embedded Arrays on Update Operations
+- Since employee references will be embedded directly inside shift documents, updates will change.
+- Adding an employee to a shift will require updating the shift document and pushing an employee ObjectId into the employees array.
+- Removing an employee from a shift will require pulling the employee ObjectId from the employees array.
+- Care must be taken to prevent duplicate ObjectId values in a shift employees array.
+- Queries for an employee’s shifts will now search shifts where the employees array contains that employee ObjectId.
+
+5. Required Database Transformation
+- A one-time transformation program named transform_db.js must be created.
+- It will:
+  - add an empty employees array to every shift
+  - read all assignment records
+  - find the employee _id for each assignment’s employeeId
+  - insert that employee _id into the correct shift document employees array
+  - remove employeeId from employees documents
+  - remove shiftId from shifts documents
+  - remove the assignments collection
+
+6. Authentication and Session Changes
+- A users collection will be created manually in MongoDB Compass.
+- Each user will contain:
+  - username
+  - hashed password using sha256
+- A login page must be added.
+- A logout route must be added.
+- A custom session system must be implemented without express-session.
+- Sessions and cookies must expire after 5 minutes.
+- Each valid request must extend session expiry by another 5 minutes.
+- All routes except login and logout must be protected by middleware.
+
+7. Security Logging Changes
+- A middleware function must log each request to a security_log collection.
+- Each log entry must contain:
+  - timestamp
+  - username if known
+  - URL accessed
+  - HTTP method used
+
+8. Photo Feature and Access Control
+- Employee photos must be added to the system.
+- A photo-related field may be stored in employee documents.
+- Photo access must only be allowed for authenticated users.
+- Routes related to viewing or updating photos must be protected.
+
+9. Risks and Possible Complications
+- Converting between string values and MongoDB ObjectId values may cause bugs.
+- Existing routes may break when changing from employeeId to _id.
+- If an invalid ObjectId is passed in a route, the application may crash unless handled properly.
+- Session expiry may fail if time extension is not updated on every request.
+- Photo paths and access rules may be implemented incorrectly if not checked carefully.
+- If the transformation program is run more than once without care, duplicate employee references could be inserted into shifts.
+
+10. Implementation Order
+- Create and commit A4_refactor_plan.txt
+- Create transform_db.js
+- Run database transformation
+- Refactor persistence layer
+- Refactor business logic
+- Refactor routes and views
+- Add users and README test accounts
+- Add login/logout
+- Add custom session handling
+- Add route protection middleware
+- Add security log middleware
+- Add employee photo feature and access control
+- Test all functionality and commit final version
